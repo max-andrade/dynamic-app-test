@@ -1,20 +1,16 @@
 const NewsItemSummary = {
     config: {
         type: 'card',
+        image: 'imageUrl',
+        //title: 'title',
     },
     contentTemplate: [
-        {
-            text: {
-                id: 'title',
-                style: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, }
-            },
-        },
-        {
+        /*{
             image: {
                 id: 'imageUrl',
                 style: { width: 320, height: 200, marginBottom: 10, }
             },
-        },
+        },*/
         {
             config: {
                 type: 'view',
@@ -49,6 +45,12 @@ const NewsItemSummary = {
         },
         {
             text: {
+                id: 'title',
+                style: { fontSize: 18, fontWeight: 'bold', marginTop: 10, }
+            },
+        },        
+        {
+            text: {
                 id: 'body',
                 style: { marginTop: 10, textAlign: 'justify', }
             },
@@ -56,4 +58,4 @@ const NewsItemSummary = {
     ],
 };
 
-export default NewsItemSummary
+export default NewsItemSummary;

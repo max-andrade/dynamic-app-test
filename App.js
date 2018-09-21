@@ -1,84 +1,91 @@
 import * as React from 'react';
-import { Text, View, ScrollView, StyleSheet, Image } from 'react-native';
+import { Text, View, ScrollView, StyleSheet, Image, ActivityIndicator, Button } from 'react-native';
 import { Constants } from 'expo';
-import { Card } from 'react-native-elements'; 
+import { Card } from 'react-native-elements';
 import moment from 'moment';
 import { Icons } from './icons';
 import StatusBarUnderlay from './StatusBarUnderlay';
 import NewsPageTemplate from './Templates/News/NewsPage';
 
-let ctx = {};
-
 export default class App extends React.Component {
-  state = { ctx: NewsPageTemplate };
+  state = { };
 
-  fillText = template => {
-    return <Text key={template.id} style={ template.style }>{ctx[template.id]}</Text>;
-  };
+  renderText = (template, item) => (
+    <Text key={template.id} style={template.style}>{item[template.id]}</Text>
+  );
 
-  fillDate= template => {
-    return <Text key={template.id} style={ template.style }>{moment(ctx[template.id]).format('DD/MM/YYYY')}</Text>;
-  };
+  renderDate = (template, item) => (
+    <Text key={template.id} style={template.style}>{moment(item[template.id]).format('DD/MM/YYYY')}</Text>
+  );
 
-  fillImage = template => {
-    return (
-      <Image
-        key={template.id}
-        style={ template.style }
-        source={{ uri: ctx[template.id] }}
-      />
-    );
-  };
+  renderImage = (template, item) => (
+    <Image
+      key={template.id}
+      style={template.style}
+      source={{ uri: item[template.id] }}
+    />
+  );
 
-  fillIcon = template => {
-    return Icons[template.id](template);
-  };
+  renderIcon = (template, item) => Icons[template.id](template);
 
-  
+  renderCard(template, props, item, content) {
+    const image = (template.config.image && { uri: item[template.config.image] }) || null;
+    const title = (template.config.title && item[template.config.title]) || null;
+    return <Card {...props} image={image} title={title}>{content}</Card>;
+  }
+
   fillTemplate = (template, item) => {
-    const bkpCtx = ctx;
-    ctx = item;
-
-    const content = [];
+    const content = [];    
+    template.config = template.config || {};
 
     if (template.contentTemplate && Array.isArray(template.contentTemplate)) {
       for (const component of template.contentTemplate)
         content.push(this.fillTemplate(component, item));
     } else {
       template.text
-        ? content.push(this.fillText(template.text))
+        ? content.push(this.renderText(template.text, item))
         : template.date
-          ? content.push(this.fillDate(template.date))
-            : template.image
-              ? content.push(this.fillImage(template.image))
-              : template.icon && content.push(this.fillIcon(template.icon));
+          ? content.push(this.renderDate(template.date, item))
+          : template.image
+            ? content.push(this.renderImage(template.image, item))
+            : template.icon && content.push(this.renderIcon(template.icon, item));
     }
 
-    ctx = bkpCtx;
+    const type = template.config.type || 'View';
+    const props = {
+      key: `${template.id || template.config.id || 'n/a'} - ${item.id || 'n/a'}`,
+      style: template.config.style,
+    };
 
-    const type = (container.config && container.config.type) || 'View';
-    const style = (template.config || {}).style;
-    const key = template.id || (template.config || {}).id || 'n/a';
     return type.match(/ScrollView/i)
-      ? <ScrollView key={key} style={style}>{contents}</ScrollView>
+      ? <ScrollView {...props}>{content}</ScrollView>
       : type.match(/Card/i)
-        ? <Card key={key} style={style}>{contents}</Card>
-        : <View key={key} style={style}>{contents}</View>;
+        ? this.renderCard(template, props, item, content)
+        : <View {...props}>{content}</View>;
   };
 
   render = () => {
     var content = [];
+   
+    NewsPageTemplate.config = NewsPageTemplate.config || {};
+    NewsPageTemplate.config.dataSource = NewsPageTemplate.config.dataSource || {};
 
-    if (this.state.ctx) {
-      ctx = this.state.ctx;
-      const data = (ctx.config && ctx.config.dataSource && ctx.config.dataSource.load && ctx.config.dataSource.load()) || [];
+    if (NewsPageTemplate.config.dataSource.isLoaded) {
+      const data = NewsPageTemplate.config.dataSource.data;
       if (data.length > 0) {
         for (const item of data) {
-          content.push(this.fillTemplate(ctx.contentTemplate || ctx, item));
-        } 
+          content.push(this.fillTemplate(NewsPageTemplate.contentTemplate || NewsPageTemplate, item));
+        }
       } else {
-        ctx.emptyTemplate && content.push(ctx.emptyTemplate);
-      }
+        NewsPageTemplate.emptyTemplate && content.push(NewsPageTemplate.emptyTemplate);
+      }        
+    } else {
+      content.push(<ActivityIndicator key="loading" size="large" />);
+      NewsPageTemplate.config.dataSource.load && NewsPageTemplate.config.dataSource.load().then(data => {
+        NewsPageTemplate.config.dataSource.isLoaded = true;
+        NewsPageTemplate.config.dataSource.data = data || [];
+        this.setState({refresh: new Date()});
+      });        
     }
 
     if (content.length === 0) content.push(<Text id='empty'>No content found...</Text>);
@@ -86,6 +93,11 @@ export default class App extends React.Component {
     return (<View style={styles.container}>
       <StatusBarUnderlay />
       <ScrollView>{content}</ScrollView>
+      <Button onPress={() => {
+        NewsPageTemplate.config.dataSource.isLoaded = false;
+        NewsPageTemplate.config.dataSource.data = null;
+        this.setState({ refresh: new Date() });
+      }} title="reset"/>      
     </View>);
   };
 }
