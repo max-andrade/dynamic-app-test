@@ -80,7 +80,7 @@ export default class App extends React.Component {
         NewsPageTemplate.emptyTemplate && content.push(NewsPageTemplate.emptyTemplate);
       }        
     } else {
-      content.push(<ActivityIndicator key="loading" size="large" />);
+      content.push(<ActivityIndicator key="loading" size="large" style={{marginTop: 20}} />);
       NewsPageTemplate.config.dataSource.load && NewsPageTemplate.config.dataSource.load().then(data => {
         NewsPageTemplate.config.dataSource.isLoaded = true;
         NewsPageTemplate.config.dataSource.data = data || [];
