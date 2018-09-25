@@ -48,13 +48,15 @@ export default class App extends React.Component {
           ? content.push(this.renderDate(template.date, item))
           : template.image
             ? content.push(this.renderImage(template.image, item))
-            : template.icon && content.push(this.renderIcon(template.icon, item));
+            : template.icon 
+              ? content.push(this.renderIcon(template.icon, item))
+              : content.push(this.fillTemplate(template.contentTemplate, item));
     }
 
     const type = template.config.type || 'View';
     const props = {
+      ...template.props,
       key: `${template.id || template.config.id || 'n/a'} - ${item.id || 'n/a'}`,
-      style: template.config.style,
     };
 
     return type.match(/ScrollView/i)
@@ -90,9 +92,13 @@ export default class App extends React.Component {
 
     if (content.length === 0) content.push(<Text id='empty'>No content found...</Text>);
 
+    const container = NewsPageTemplate.config.type.match(/ScrollView/i)
+      ? <ScrollView {...NewsPageTemplate.props}>{content}</ScrollView>
+      : <View {...NewsPageTemplate.props}>{content}</View>;
+
     return (<View style={styles.container}>
       <StatusBarUnderlay />
-      <ScrollView>{content}</ScrollView>
+      {container}
       <Button onPress={() => {
         NewsPageTemplate.config.dataSource.isLoaded = false;
         NewsPageTemplate.config.dataSource.data = null;

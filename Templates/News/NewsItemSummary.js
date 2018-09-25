@@ -1,8 +1,13 @@
+import { Dimensions } from 'react-native';
+
 const NewsItemSummary = {
     config: {
         type: 'card',
         image: 'imageUrl',
-        //title: 'title',
+        //title: 'title',         
+    },
+    props: {       
+        containerStyle: { flexGrow: 1, width: Dimensions.get('screen').width / 3, margin: 8, },
     },
     contentTemplate: [
         /*{
@@ -13,8 +18,10 @@ const NewsItemSummary = {
         },*/
         {
             config: {
-                type: 'view',
-                style: { flexDirection: 'row', },
+                type: 'view',                
+            },
+            props: {
+                style: { flexDirection: 'row', flexWrap: 'wrap'},
             },
             contentTemplate: [
                 {

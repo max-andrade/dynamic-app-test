@@ -7,10 +7,12 @@ const NewsPage = {
         type: 'scrollView',        
         dataSource: endpoints.news,
         allowRefresh: true,
-        style: {},
         onTap: {
             scrollView: {},
         },
+    },
+    props: {
+        contentContainerStyle: { flexDirection: 'row', flexWrap: 'wrap', padding: 10,  },
     },
     emptyTemplate: {},
     contentTemplate: itemTemplate,
