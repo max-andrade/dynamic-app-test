@@ -1,22 +1,20 @@
-import { Dimensions } from 'react-native';
 
-const NewsItemSummary = {
+const ArticlePage = {
     config: {
-        id: 'articleSummary',
-        type: 'card',
-        image: 'imageUrl',
-        //title: 'title',         
+        id: 'articlePage',
+        type: 'scrollView',        
     },
-    props: {       
-        containerStyle: { flexGrow: 1, width: Dimensions.get('screen').width / 3, margin: 8, },
+    props: {
+        contentContainerStyle: { flexDirection: 'row', flexWrap: 'wrap', padding: 10,  },
     },
+    emptyTemplate: {},
     contentTemplate: [
-        /*{
+        {
             image: {
                 id: 'imageUrl',
                 style: { width: 320, height: 200, marginBottom: 10, }
             },
-        },*/
+        },
         {
             config: {
                 type: 'view',                
@@ -62,8 +60,8 @@ const NewsItemSummary = {
                 id: 'body',
                 style: { marginTop: 10, textAlign: 'justify', }
             },
-        },
+        },        
     ],
 };
 
-export default NewsItemSummary;
+export default ArticlePage;

@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { Text, View, ScrollView, StyleSheet, Image, ActivityIndicator, Button } from 'react-native';
+import { createDrawerNavigator, createStackNavigator, createBottomTabNavigator } from 'react-navigation';
+import Colors from '../constants/Colors';
+import { Text, View, ScrollView, StyleSheet, Image, ActivityIndicator, Button, Platform, TouchableOpacity } from 'react-native';
 import { Constants } from 'expo';
 import { Card } from 'react-native-elements';
 import moment from 'moment';
@@ -35,8 +37,90 @@ export default class App extends React.Component {
   }
 
   fillTemplate = (template, item) => {
-    const content = [];    
     template.config = template.config || {};
+    template.config.dataSource = template.config.dataSource || {};
+
+    const type = template.config.type || 'View';
+    const props = {
+      ...template.props,
+      key: `${template.id || template.config.id || 'n/a'} - ${(item && item.id) || 'n/a'}`,
+    };
+
+    if (type.match(/SwitchNavigator/i)) {
+      
+    } else if (type.match(/DrawerNavigator/i)) {
+      const menuEntries = {};
+      for(const entry of template.config.dataSource) {
+        //INFO: need to create a stack navigator to contain the tab navigator to avoid issue with "There is no route defined for key"
+        //      https://github.com/react-navigation/react-navigation/issues/3696
+        const contentStack = createStackNavigator({
+          screen: this.fillTemplate(entry.contentTemplate)
+        }, {
+          headerMode: 'none'
+        });
+        contentStack.navigationOptions = ({ navigation }) => {
+            return {
+              drawerLabel: entry.config.title,
+              drawerIcon: Icons[entry.config.icon || 'none'](),   
+            };
+        };
+        menuEntries[entry.config.title] = contentStack;
+      }
+      return createDrawerNavigator({
+        ...menuEntries,
+        }, {
+            drawerPosition: 'right',
+            contentOptions: {
+              activeTintColor: Colors.tintColor,
+              inactiveTintColor: Colors.tintColor,
+            },
+        });
+    } else if (type.match(/TabNavigator/i)) {
+      const tabMenuEntries = {};
+      for(const tabEntry of template.config.dataSource) {
+        const stackMenuEntries = {};
+        for(const pageEntry of tabEntry.contentTemplate) {
+          stackMenuEntries[pageEntry.config.id] = this.fillTemplate(pageEntry);
+        }
+        const contentStack = createStackNavigator({
+          ...stackMenuEntries,
+        }, );
+        contentStack.navigationOptions = ({ navigation }) => {
+            return {
+              headerBackTitleVisible: true,
+              headerRight: (
+                <TouchableOpacity onPress={() => navigation.openDrawer()}>
+                  {Icons.menu({ style: {marginRight: 10 }})}
+                </TouchableOpacity>
+              ),                
+              tabBarLabel: ({ focused }) => {
+                const style = {
+                  textAlign: 'center',
+                  fontSize: 12,                  
+                  color: focused ? Colors.tabIconSelected : Colors.tabIconDefault,
+                };                
+                return (<Text style={style}>{tabEntry.config.title}</Text>);
+              },
+              tabBarIcon:  ({ focused }) => Icons[tabEntry.config.icon || 'none']({
+                size: 26,
+                style: { marginBottom: -3 },
+                color: focused ? Colors.tabIconSelected : Colors.tabIconDefault,
+              }),   
+            };
+        };
+        tabMenuEntries[tabEntry.config.title] = contentStack;
+      }
+      return createBottomTabNavigator({
+        ...tabMenuEntries,
+        }, {
+          swipeEnabled: true,
+          animationEnabled: true,
+        });
+    } else if (type.match(/StackNavigator/i)) {
+
+    }
+
+    const content = [];        
 
     if (template.contentTemplate && Array.isArray(template.contentTemplate)) {
       for (const component of template.contentTemplate)
@@ -52,12 +136,6 @@ export default class App extends React.Component {
               ? content.push(this.renderIcon(template.icon, item))
               : content.push(this.fillTemplate(template.contentTemplate, item));
     }
-
-    const type = template.config.type || 'View';
-    const props = {
-      ...template.props,
-      key: `${template.id || template.config.id || 'n/a'} - ${item.id || 'n/a'}`,
-    };
 
     return type.match(/ScrollView/i)
       ? <ScrollView {...props}>{content}</ScrollView>
